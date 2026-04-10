@@ -2,12 +2,12 @@
 
 # API Provider Configuration
 # Choose between "gemini" or "openai" (OpenAI compatible API)
-api_provider: "gemini" # or "gemini"
+api_provider: "openai" # or "gemini"
 
 # Model Configuration
 # Specify the exact model name to use
 # Leave empty to use default model for the provider
-model_name: "" # e.g., "gemini-2.5-flash", "gemini-2.5-pro", "openai/gpt-4.1"
+model_name: "qwen_vl_max" # e.g., "gemini-2.5-flash", "gemini-2.5-pro", "openai/gpt-4.1"
 
 # Navigation Mode
 adaptive_mode: false # Enable adaptive depth-based movement (true/false)
