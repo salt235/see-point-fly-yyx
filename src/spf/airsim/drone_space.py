@@ -15,6 +15,8 @@ class AirSimDroneActionSpace(DroneActionSpace):
         self.base_velocity = config.get("base_velocity", 2.0)
         self.base_yaw_rate = config.get("base_yaw_rate", 30.0)
         self.min_command_duration = config.get("min_command_duration", 2.0)
+        self.yaw_deadzone_deg = config.get("yaw_deadzone_deg", 20.0)
+        self.max_vertical_velocity = config.get("max_vertical_velocity", 0.4)
 
     def _load_config(self, config_path: str) -> dict:
         """Load configuration from YAML file"""
@@ -101,14 +103,14 @@ class AirSimDroneActionSpace(DroneActionSpace):
             )
 
             # Add rotation command if angle is significant
-            if abs(target_angle) > 10:
+            if abs(target_angle) > self.yaw_deadzone_deg:
                 commands.append(
                     ("rotate_yaw", {"angle": target_angle, "yaw_rate": base_yaw_rate})
                 )
                 print(f"[YAW DEBUG] Adding rotation command: {target_angle:.1f}°")
             else:
                 print(
-                    f"[YAW DEBUG] Target angle {target_angle:.1f}° is within threshold, no yaw"
+                    f"[YAW DEBUG] Target angle {target_angle:.1f}° is within deadzone ({self.yaw_deadzone_deg:.1f}°), no yaw"
                 )
 
         # Step 2: Move forward after rotation (or if no rotation needed)
@@ -119,6 +121,7 @@ class AirSimDroneActionSpace(DroneActionSpace):
         # Calculate vertical velocity to maintain correct angle
         if distance_xy > 0.01:
             vz = (-action.dz / distance_xy) * velocity_scale
+            vz = max(-self.max_vertical_velocity, min(vz, self.max_vertical_velocity))
             duration = max(distance_xy / velocity_scale, self.min_command_duration)
         else:
             vz = 0

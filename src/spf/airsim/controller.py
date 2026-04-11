@@ -17,11 +17,16 @@ class AirSimController:
         self.client.enableApiControl(True)
         self.client.armDisarm(True)
 
+        self.hover_settle_time = 0.8
+        self.takeoff_settle_time = 1.5
+
         # Apply wind settings from config
         if config:
             wind_x = config.get("wind_x", 0.0)
             wind_y = config.get("wind_y", 0.0)
             wind_z = config.get("wind_z", 0.0)
+            self.hover_settle_time = config.get("hover_settle_time", 0.8)
+            self.takeoff_settle_time = config.get("takeoff_settle_time", 1.5)
             wind = airsim.Vector3r(wind_x, wind_y, wind_z)
             self.client.simSetWind(wind)
             print(f"Wind set to: X={wind_x}, Y={wind_y}, Z={wind_z} m/s (NED frame)")
@@ -75,6 +80,7 @@ class AirSimController:
                 print(f"Executing rotate_yaw: {angle:.1f}° at {yaw_rate:.1f}°/s")
                 self.client.rotateByYawRateAsync(rate, duration).join()
                 self.client.hoverAsync().join()
+                time.sleep(self.hover_settle_time)
 
             elif command_type == "move_velocity_body":
                 vx = params["vx"]
@@ -101,6 +107,7 @@ class AirSimController:
 
                 # Immediately engage hover mode
                 self.client.hoverAsync().join()
+                time.sleep(self.hover_settle_time)
 
         except Exception as e:
             print(f"Command execution failed: {e}")
@@ -147,6 +154,7 @@ class AirSimController:
         """Takeoff the drone"""
         print("Taking off...")
         self.client.takeoffAsync().join()
+        time.sleep(self.takeoff_settle_time)
         print("Takeoff complete")
 
     def process_spatial_command(self, current_frame, instruction: str):

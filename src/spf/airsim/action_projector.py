@@ -150,6 +150,10 @@ IMPORTANT:
             y, x = point_info["point"]
             pixel_x = int((x / 1000.0) * self.image_width)
             pixel_y = int((y / 1000.0) * self.image_height)
+            
+            # Clip to image bounds to prevent out-of-bounds projection errors
+            pixel_x = max(0, min(pixel_x, self.image_width - 1))
+            pixel_y = max(0, min(pixel_y, self.image_height - 1))
 
             vlm_depth = point_info.get("depth", 4)
 
