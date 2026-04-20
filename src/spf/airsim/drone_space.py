@@ -28,6 +28,7 @@ class AirSimDroneActionSpace(DroneActionSpace):
             print(f"Warning: Could not load config from {config_path}: {e}")
         return {}
 
+    # 测试函数，随机生成一些动作点，主要用于验证投影和命令生成逻辑是否正确
     def sample_actions(self) -> List[ActionPoint]:
         """Sample possible relative movements from current position (0,0,0)"""
         actions = []
@@ -54,6 +55,7 @@ class AirSimDroneActionSpace(DroneActionSpace):
 
         return actions
 
+    # 核心函数，先转向目标，再前进
     def action_to_commands(self, action: ActionPoint) -> List[Tuple[str, dict]]:
         """Convert a relative movement action into AirSim API commands
 
@@ -80,6 +82,7 @@ class AirSimDroneActionSpace(DroneActionSpace):
         velocity_scale = self.base_velocity * velocity_multiplier
         base_yaw_rate = self.base_yaw_rate * velocity_multiplier
 
+        # 计算总距离，如果距离非常近，可能不需要执行任何命令
         total_distance = math.sqrt(action.dx**2 + action.dy**2 + action.dz**2)
 
         if total_distance < 0.01:

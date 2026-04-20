@@ -104,6 +104,7 @@ class ActionProjector:
             print(f"Error in project_point: {e}")
             return (int(self.image_width/2), int(self.image_height/2))
 
+    # 核心函数，反向投影函数，根据屏幕坐标和深度信息将2D点转换回3D空间坐标
     def reverse_project_point(self, point_2d: Tuple[int, int], depth: float = 1.0) -> Tuple[float, float, float]:
         """Project 2D screen point to 3D world space at given depth"""
         try:

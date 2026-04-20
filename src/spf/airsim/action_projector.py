@@ -36,18 +36,20 @@ class AirSimActionProjector(ActionProjector):
         else:
             return "gemini-2.5-flash"
 
+    # 这个函数是核心，负责从图像和指令中获取VLM点，并将其转换为空间动作
     def get_vlm_points(
         self, image: np.ndarray, instruction: str, **kwargs
-    ) -> List[ActionPoint]:
+    ) -> List[ActionPoint]: # 目前只返回一个动作点，后续可以扩展为返回多个动作点
         timestamp = time.strftime("%Y%m%d_%H%M%S")
 
         try:
-            actions = [self._get_single_action(image, instruction)]
+            actions = [self._get_single_action(image, instruction)] # 把一个动作包装成列表返回，保持接口一致性，后续可以直接扩展为获取多个动作点
 
             if actions and actions[0] is not None:
-                viz_image = image.copy()
+                viz_image = image.copy() # 复制一份输入的图像用于打点
 
                 for i, action in enumerate(actions, 1):
+                    # opencv的画圆圈函数，参数分别是：图像、圆心坐标、半径、颜色、线宽（-1表示填充圆）
                     cv2.circle(
                         viz_image,
                         (int(action.screen_x), int(action.screen_y)),
@@ -56,6 +58,7 @@ class AirSimActionProjector(ActionProjector):
                         -1,
                     )
 
+                    # 在图像上标注，写上空间位移信息，参数分别是：图像、文本内容、文本位置、字体、字体大小、颜色、线宽
                     cv2.putText(
                         viz_image,
                         f"{i}: ({action.dx:.1f}, {action.dy:.1f}, {action.dz:.1f})",
@@ -78,6 +81,7 @@ class AirSimActionProjector(ActionProjector):
                 }
 
                 for action in actions:
+                    # 创建一个字典来记录
                     action_data = {
                         "dx": action.dx,
                         "dy": action.dy,
@@ -85,7 +89,8 @@ class AirSimActionProjector(ActionProjector):
                         "screen_x": action.screen_x,
                         "screen_y": action.screen_y,
                     }
-
+                    
+                    # 如果是自适应模式，记录适应性深度和VLM深度信息，方便后续分析
                     if (
                         hasattr(action, "adaptive_depth")
                         and action.adaptive_depth is not None
@@ -105,6 +110,7 @@ class AirSimActionProjector(ActionProjector):
             print(f"Error getting points: {e}")
             return []
 
+    # 核心函数，负责从图像和指令中获取一个VLM点，并将其转换为空间动作
     def _get_single_action(
         self, image: np.ndarray, instruction: str, **kwargs
     ) -> ActionPoint:
@@ -136,6 +142,7 @@ IMPORTANT:
 
             from ..clients.vlm_client import VLMClient
 
+            # 清洗函数会去掉响应中的多余文本，只保留JSON部分，确保后续解析不会出错
             response_text = VLMClient.clean_response_text(response_text)
 
             print(f"\n{self.api_provider.upper()} Response:")
@@ -162,7 +169,7 @@ IMPORTANT:
                 depth_for_projection = adaptive_depth
             else:
                 adaptive_depth = None
-                depth_for_projection = vlm_depth / 10.0 * 2.0
+                depth_for_projection = vlm_depth / 10.0 * 2.0 # 直接把 1~10 的评分线性映射到 0~2 这个范围
 
             x3d, y3d, z3d = self.reverse_project_point(
                 (pixel_x, pixel_y), depth=depth_for_projection
