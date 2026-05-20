@@ -109,6 +109,9 @@ def capture_airsim_image(client, camera_name="0"):
 def main(args):
     """Main entrypoint for AirSim mode"""
 
+    inference_steps = 0
+    task_start_time = None
+
     if args.test:
         print("\n=== TEST MODE WITH STATIC IMAGE ===")
         test_image_path = "frame_airsim_test.jpg"
@@ -207,6 +210,8 @@ def main(args):
         print("\nStarting control loop...")
         print("Press Ctrl+C to exit")
 
+        task_start_time = time.monotonic()
+
         while True:
             if args.debug:
                 print("Waiting for previous actions to complete...")
@@ -223,6 +228,7 @@ def main(args):
                 continue
 
             response = airsim_controller.process_spatial_command(frame, current_command)
+            inference_steps += 1
             print(f"\nAction Response:\n{response}\n")
 
             time.sleep(command_loop_delay)
@@ -235,6 +241,11 @@ def main(args):
 
         traceback.print_exc()
     finally:
+        if task_start_time is not None:
+            elapsed_seconds = int(time.monotonic() - task_start_time)
+            print("\n=== TASK SUMMARY ===")
+            print(f"Total inference steps: {inference_steps}")
+            print(f"Total time: {elapsed_seconds}s")
         if airsim_controller is not None:
             airsim_controller.stop()
 
